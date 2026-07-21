@@ -1,14 +1,11 @@
-
-import './App.css'
+import { AuthProvider } from "./context/AuthContext"
+import AppRoutes from "./routes/AppRoutes"
 
 function App() {
- 
-
   return (
-    <>
-      
-      <h1>WELCOME TO EMPLOYEE PORTAL</h1>
-    </>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   )
 }
 
