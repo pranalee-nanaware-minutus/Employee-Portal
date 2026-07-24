@@ -14,7 +14,6 @@ import {
   Divider,
 } from "@mui/material"
 import { useNavigate, useParams } from "react-router-dom"
-import toast from 'react-hot-toast'
 import { employeeService } from "../../services/employeeService"
 import type { Employee, UpdateEmployeeData } from "../../types/employee"
 
@@ -82,12 +81,9 @@ function EditEmployee() {
     try {
       if (!id) return
       await employeeService.updateEmployee(Number(id), formData)
-      toast.success('Employee updated successfully!')
       navigate("/employees")
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error updating employee"
-      setError(errorMessage)
-      toast.error(errorMessage)
+      setError(err instanceof Error ? err.message : "Error updating employee")
     } finally {
       setSubmitting(false)
     }

@@ -25,7 +25,6 @@ import {
 } from "@mui/material"
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material"
 import { Link as RouterLink } from "react-router-dom"
-import toast from 'react-hot-toast'
 import { employeeService } from "../../services/employeeService"
 import type { Employee } from "../../types/employee"
 import { useNavigate } from "react-router-dom"
@@ -89,13 +88,11 @@ function Employees() {
     if (employeeToDelete) {
       try {
         await employeeService.deleteEmployee(employeeToDelete.id)
-        toast.success('Employee deleted successfully!')
         await fetchEmployees()
         setDeleteDialogOpen(false)
         setEmployeeToDelete(null)
       } catch (error) {
         console.error("Error deleting employee:", error)
-        toast.error('Error deleting employee')
       }
     }
   }

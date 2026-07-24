@@ -1,200 +1,104 @@
 import { useState } from "react"
-import { Typography, TextField, Button, Box, Alert, Link, InputAdornment, IconButton } from "@mui/material"
+import { Typography, TextField, Button, Box, Alert, Link } from "@mui/material"
 import { useNavigate, Link as RouterLink } from "react-router-dom"
-import { Visibility, VisibilityOff, Email as EmailIcon, Lock as LockIcon, Person as PersonIcon } from "@mui/icons-material"
-import toast from 'react-hot-toast'
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import type { SignupFormData } from "../../utils/validationSchemas"
-import { signupSchema } from "../../utils/validationSchemas"
 import AuthLayout from "../../components/auth/AuthLayout"
 import AuthCard from "../../components/auth/AuthCard"
 import { authService } from "../../services/authService"
 
 function Signup() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  
   const navigate = useNavigate()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema),
-  })
-
-  const onSubmit = async (data: SignupFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    
+    // Validation
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+    
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters")
+      return
+    }
+    
     setLoading(true)
+
     try {
-      await authService.signup({ 
-        name: data.name, 
-        email: data.email, 
-        password: data.password 
-      })
-      toast.success('Account created successfully! Please login.')
+      await authService.signup({ name, email, password })
+      alert("Account created successfully! Please login.")
       navigate("/login")
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error creating account"
-      toast.error(errorMessage)
+      setError(err instanceof Error ? err.message : "Error creating account")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword)
-  }
-
-  const handleClickShowConfirmPassword = () => {
-    setShowConfirmPassword(!showConfirmPassword)
-  }
-
   return (
     <AuthLayout>
       <AuthCard
-        title="Create Account"
-        subtitle="Join the Employee Portal today"
+        title="Sign Up"
+        subtitle="Create your account"
       >
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Box
           component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+          onSubmit={handleSubmit}
+          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
-          {/* Full Name Field */}
           <TextField
             label="Full Name"
             type="text"
-            {...register("name")}
-            error={!!errors.name}
-            helperText={errors.name?.message}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
             fullWidth
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PersonIcon color="action" />
-                  </InputAdornment>
-                ),
-              },
-            }}
           />
-
-          {/* Email Field */}
           <TextField
-            label="Email Address"
+            label="Email"
             type="email"
-            {...register("email")}
-            error={!!errors.email}
-            helperText={errors.email?.message}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             fullWidth
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon color="action" />
-                  </InputAdornment>
-                ),
-              },
-            }}
           />
-
-          {/* Password Field */}
           <TextField
             label="Password"
-            type={showPassword ? "text" : "password"}
-            {...register("password")}
-            error={!!errors.password}
-            helperText={errors.password?.message || "At least 6 characters"}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
             fullWidth
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockIcon color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleClickShowPassword}
-                      edge="end"
-                      size="small"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
+            helperText="At least 6 characters"
           />
-
-          {/* Confirm Password Field */}
           <TextField
             label="Confirm Password"
-            type={showConfirmPassword ? "text" : "password"}
-            {...register("confirmPassword")}
-            error={!!errors.confirmPassword}
-            helperText={errors.confirmPassword?.message}
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
             fullWidth
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockIcon color="action" />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleClickShowConfirmPassword}
-                      edge="end"
-                      size="small"
-                    >
-                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
           />
-
-          {/* Submit Button */}
           <Button
             type="submit"
             variant="contained"
-            size="large"
             disabled={loading}
-            sx={{
-              mt: 2,
-              py: 1.5,
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #5568d3 0%, #653a8b 100%)",
-              },
-            }}
+            fullWidth
+            sx={{ mt: 1 }}
           >
             {loading ? "Creating account..." : "Sign Up"}
           </Button>
-
-          {/* Login Link */}
-          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-            Already have an account?{" "}
-            <Link
-              component={RouterLink}
-              to="/login"
-              sx={{
-                color: "#667eea",
-                textDecoration: "none",
-                fontWeight: 600,
-                "&:hover": {
-                  textDecoration: "underline",
-                },
-              }}
-            >
-              Login
-            </Link>
+          <Typography variant="body2" align="center">
+            Already have an account? <Link component={RouterLink} to="/login">Login</Link>
           </Typography>
         </Box>
       </AuthCard>

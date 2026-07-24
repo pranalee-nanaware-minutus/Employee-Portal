@@ -103,6 +103,16 @@
       "salary": 30000,
       "joinDate": "2026-05-19",
       "status": "active"
+    },
+    {
+      "id": 1784808123131,
+      "name": "Pranalee Nanaware",
+      "email": "pranaleenanaware@gmail.com",
+      "department": "Finance",
+      "position": "developer",
+      "salary": 50987,
+      "joinDate": "2026-07-23",
+      "status": "active"
     }
   ]
 }

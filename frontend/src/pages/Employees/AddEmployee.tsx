@@ -14,7 +14,6 @@ import {
   Divider,
 } from "@mui/material"
 import { useNavigate } from "react-router-dom"
-import toast from 'react-hot-toast'
 import { employeeService } from "../../services/employeeService"
 import type { CreateEmployeeData } from "../../types/employee"
 
@@ -64,12 +63,9 @@ function AddEmployee() {
 
     try {
       await employeeService.createEmployee(formData)
-      toast.success('Employee created successfully!')
       navigate("/employees")
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error creating employee"
-      setError(errorMessage)
-      toast.error(errorMessage)
+      setError(err instanceof Error ? err.message : "Error creating employee")
     } finally {
       setLoading(false)
     }
