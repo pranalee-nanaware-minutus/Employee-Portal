@@ -6,18 +6,14 @@ const { JSONFile } = require('lowdb/node')
 const path = require('path')
 const express = require('express')
 
-// Initialize lowdb with default data
-const adapter = new JSONFile(path.join(__dirname, 'db.json'))
-const db = new Low(adapter, {
-  users: [],
-  employees: []
-})
+// Import database
+const { db } = require('../database')
 
 // Create Express router for custom API routes
 const apiRouter = express.Router()
 
 // Create JSON Server router
-const router = jsonServer.router(path.join(__dirname, 'db.json'))
+const router = jsonServer.router(path.join(__dirname, '../database/db.json'))
 const middlewares = jsonServer.defaults()
 
 // Create server
@@ -42,5 +38,5 @@ const PORT = 3001
 server.listen(PORT, () => {
   console.log(`JSON Server is running on http://localhost:${PORT}`)
   console.log(`API endpoints available at http://localhost:${PORT}/api`)
-  console.log(`Database file: ${path.join(__dirname, 'db.json')}`)
+  console.log(`Database file: ${path.join(__dirname, '../database/db.json')}`)
 })

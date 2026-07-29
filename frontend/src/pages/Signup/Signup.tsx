@@ -1,43 +1,38 @@
 import { useState } from "react"
-import { Typography, TextField, Button, Box, Alert, Link } from "@mui/material"
+import { TextField, Button, Box, Link } from "@mui/material"
 import { useNavigate, Link as RouterLink } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "react-hot-toast"
 import AuthLayout from "../../components/auth/AuthLayout"
 import AuthCard from "../../components/auth/AuthCard"
 import { authService } from "../../services/authService"
+import { signupSchema, type SignupFormData } from "../../schemas/authSchema"
 
-function Signup() {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState("")
+const Signup = () => {
   const [loading, setLoading] = useState(false)
-  
   const navigate = useNavigate()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    
-    // Validation
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
-    
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      return
-    }
-    
-    setLoading(true)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+  })
 
+  const onSubmit = async (data: SignupFormData) => {
+    setLoading(true)
     try {
-      await authService.signup({ name, email, password })
-      alert("Account created successfully! Please login.")
+      await authService.signup({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      })
+      toast.success("Account created successfully! Please login.")
       navigate("/login")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error creating account")
+      toast.error(err instanceof Error ? err.message : "Error creating account")
     } finally {
       setLoading(false)
     }
@@ -45,48 +40,42 @@ function Signup() {
 
   return (
     <AuthLayout>
-      <AuthCard
-        title="Sign Up"
-        subtitle="Create your account"
-      >
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <AuthCard title="Sign Up" subtitle="Create your account">
         <Box
           component="form"
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
           <TextField
             label="Full Name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
             fullWidth
+            error={!!errors.name}
+            helperText={errors.name?.message}
+            {...register("name")}
           />
           <TextField
             label="Email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
             fullWidth
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            {...register("email")}
           />
           <TextField
             label="Password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
             fullWidth
-            helperText="At least 6 characters"
+            error={!!errors.password}
+            helperText={errors.password?.message || "At least 6 characters"}
+            {...register("password")}
           />
           <TextField
             label="Confirm Password"
             type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
             fullWidth
+            error={!!errors.confirmPassword}
+            helperText={errors.confirmPassword?.message}
+            {...register("confirmPassword")}
           />
           <Button
             type="submit"
@@ -97,9 +86,11 @@ function Signup() {
           >
             {loading ? "Creating account..." : "Sign Up"}
           </Button>
-          <Typography variant="body2" align="center">
-            Already have an account? <Link component={RouterLink} to="/login">Login</Link>
-          </Typography>
+          <Box sx={{ textAlign: "center" }}>
+            <Link component={RouterLink} to="/login" variant="body2">
+              Already have an account? Login
+            </Link>
+          </Box>
         </Box>
       </AuthCard>
     </AuthLayout>

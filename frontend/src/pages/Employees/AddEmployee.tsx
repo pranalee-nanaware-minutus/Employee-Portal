@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   Typography,
   Box,
@@ -9,63 +9,52 @@ import {
   Select,
   MenuItem,
   Grid,
-  Alert,
   Paper,
   Divider,
 } from "@mui/material"
 import { useNavigate } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "react-hot-toast"
 import { employeeService } from "../../services/employeeService"
-import type { CreateEmployeeData } from "../../types/employee"
+import { employeeSchema, type EmployeeFormData } from "../../schemas/employeeSchema"
 
-function AddEmployee() {
-  const [formData, setFormData] = useState<CreateEmployeeData>({
-    name: "",
-    email: "",
-    department: "",
-    position: "",
-    salary: 0,
-    joinDate: new Date().toISOString().split('T')[0],
-    status: "active"
-  })
-  const [salaryInput, setSalaryInput] = useState("")
-  const [error, setError] = useState("")
+const DEPARTMENTS = [
+  "Engineering",
+  "HR",
+  "Marketing",
+  "Finance",
+  "Sales",
+  "Operations",
+]
+
+const AddEmployee = () => {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    
-    if (name === 'salary') {
-      setSalaryInput(value)
-      setFormData(prev => ({
-        ...prev,
-        [name]: value === '' ? 0 : Number(value)
-      }))
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }))
-    }
-  }
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<EmployeeFormData>({
+    resolver: zodResolver(employeeSchema),
+    defaultValues: {
+      joinDate: new Date().toISOString().split("T")[0],
+      status: "active",
+    },
+  })
 
-  // Initialize salary input when form loads
-  useEffect(() => {
-    if (formData.salary > 0) {
-      setSalaryInput(formData.salary.toString())
-    }
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+  const onSubmit = async (data: EmployeeFormData) => {
     setLoading(true)
-
     try {
-      await employeeService.createEmployee(formData)
+      await employeeService.createEmployee({
+        ...data,
+        salary: Number(data.salary),
+      })
+      toast.success("Employee created successfully!")
       navigate("/employees")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error creating employee")
+      toast.error(err instanceof Error ? err.message : "Error creating employee")
     } finally {
       setLoading(false)
     }
@@ -82,66 +71,53 @@ function AddEmployee() {
         </Typography>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-          {error}
-        </Alert>
-      )}
-
       <Paper
         elevation={0}
         sx={{
           p: 4,
           borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
+          border: "1px solid",
+          borderColor: "divider",
           maxWidth: 800,
         }}
       >
-        <Box component="form" onSubmit={handleSubmit}>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
               <TextField
                 label="Full Name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
                 fullWidth
                 placeholder="Enter employee's full name"
                 helperText="First and last name"
+                error={!!errors.name}
+                {...register("name")}
               />
             </Grid>
 
             <Grid size={{ xs: 12 }}>
               <TextField
                 label="Email Address"
-                name="email"
                 type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
                 fullWidth
                 placeholder="example@company.com"
                 helperText="Company email address"
+                error={!!errors.email}
+                {...register("email")}
               />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth required>
+              <FormControl fullWidth error={!!errors.department}>
                 <InputLabel>Department</InputLabel>
                 <Select
-                  name="department"
-                  value={formData.department}
                   label="Department"
-                  onChange={(e) => handleChange(e as any)}
+                  {...register("department")}
                 >
-                  <MenuItem value="Engineering">Engineering</MenuItem>
-                  <MenuItem value="HR">HR</MenuItem>
-                  <MenuItem value="Marketing">Marketing</MenuItem>
-                  <MenuItem value="Finance">Finance</MenuItem>
-                  <MenuItem value="Sales">Sales</MenuItem>
-                  <MenuItem value="Operations">Operations</MenuItem>
+                  {DEPARTMENTS.map((dept) => (
+                    <MenuItem key={dept} value={dept}>
+                      {dept}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -149,54 +125,42 @@ function AddEmployee() {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Position"
-                name="position"
-                value={formData.position}
-                onChange={handleChange}
-                required
                 fullWidth
                 placeholder="e.g. Software Engineer"
                 helperText="Job title or position"
+                error={!!errors.position}
+                {...register("position")}
               />
             </Grid>
 
-          <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Salary"
-                name="salary"
                 type="text"
-                value={salaryInput}
-                onChange={handleChange}
-                required
                 fullWidth
-                slotProps={{ htmlInput: { min: 0 } }}
                 placeholder="50000"
                 helperText="Annual salary in USD"
+                error={!!errors.salary}
+                {...register("salary")}
               />
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Join Date"
-                name="joinDate"
                 type="date"
-                value={formData.joinDate}
-                onChange={handleChange}
-                required
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
                 helperText="Date of joining"
+                error={!!errors.joinDate}
+                {...register("joinDate")}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Grid>
 
             <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth>
+              <FormControl fullWidth error={!!errors.status}>
                 <InputLabel>Status</InputLabel>
-                <Select
-                  name="status"
-                  value={formData.status}
-                  label="Status"
-                  onChange={(e) => handleChange(e as any)}
-                >
+                <Select label="Status" {...register("status")}>
                   <MenuItem value="active">Active</MenuItem>
                   <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
