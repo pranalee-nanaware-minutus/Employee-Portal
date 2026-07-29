@@ -3,7 +3,17 @@ const bcrypt = require('bcrypt')
 
 const SECRET_KEY = 'your-secret-key-change-this-in-production'
 
-module.exports = (router, db) => {
+// Database initialization (moved from server.js)
+const { Low } = require('lowdb')
+const { JSONFile } = require('lowdb/node')
+const path = require('path')
+const adapter = new JSONFile(path.join(__dirname, 'db.json'))
+const db = new Low(adapter, {
+  users: [],
+  employees: []
+})
+
+module.exports = (router) => {
   
   // Signup endpoint
   router.post('/signup', async (req, res) => {
